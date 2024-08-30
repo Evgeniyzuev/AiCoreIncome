@@ -10,9 +10,13 @@ const App: React.FC = () => {
   const [aicoreLevel, setAicoreLevel] = useState(0);
   const [aicoreBalance, setAicoreBalance] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [walletAction, setWalletAction] = useState<'topUp' | 'spend' | 'increase' | null>(null);
+  const [walletAction, setWalletAction] = useState<'topUp' | 'spend' | 'inCore' | 'withdraw' | null>(null);
   const [actionAmount, setActionAmount] = useState('');
   const [actionMessage, setActionMessage] = useState('');
+  const [reinvestmentPart, setReinvestmentPart] = useState(0.3);
+  const dailyCoreRate = 0.0006;
+  const dailyWalletRate = 0.0003;
+  const [coreAfterXyears, setCoreAfterXyears] = useState(30);
 
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -33,17 +37,9 @@ const App: React.FC = () => {
     setAicoreLevel(newLevel);
   }, [aicoreBalance]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setWalletBalance(prevBalance => parseFloat((prevBalance + aicoreBalance / 100).toFixed(2)));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [aicoreBalance]);
-
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setChatResponse("Chat is available from the next level");
+    setChatResponse("Chat under development");
     setChatInput('');
   };
 
@@ -57,7 +53,7 @@ const App: React.FC = () => {
     setWalletBalance(0);
   };
 
-  const handleWalletAction = (action: 'topUp' | 'spend' | 'increase') => {
+  const handleWalletAction = (action: 'topUp' | 'spend' | 'inCore' | 'withdraw') => {
     setWalletAction(action);
     setActionAmount('');
     switch (action) {
@@ -67,8 +63,11 @@ const App: React.FC = () => {
       case 'spend':
         setActionMessage('Spend');
         break;
-      case 'increase':
-        setActionMessage('Increase power AiCore');
+      case 'withdraw':
+        setActionMessage('Withdraw 10%');
+        break;
+      case 'inCore':
+        setActionMessage('Increase AiCore');
         break;
     }
   };
@@ -91,7 +90,14 @@ const App: React.FC = () => {
         }
         setWalletBalance(prev => prev - amount);
         break;
-      case 'increase':
+      case 'withdraw':
+        if (amount > walletBalance) {
+          alert('Insufficient funds');
+          return;
+        }
+        setWalletBalance(prev => prev - amount);
+        break;
+      case 'inCore':
         if (amount > walletBalance) {
           alert('Insufficient funds');
           return;
@@ -112,17 +118,77 @@ const App: React.FC = () => {
     setActionMessage('');
   };
 
+  const handleReinvestmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setReinvestmentPart(value / 100);
+  };
+
+  const handleReinvestmentBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const bar = e.currentTarget;
+    const rect = bar.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = (x / rect.width) * 100;
+    setReinvestmentPart(percentage / 100);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
+      case 'core':
+        return (
+          <div className="text-xl flex flex-col items-center">
+            <div className="mb-4">Core rate (24,5%): {(aicoreBalance * dailyCoreRate).toFixed(2)} USD/day</div>
+            <div className="mb-4 flex items-center">
+              <span className="mr-2">Reinvest</span>
+              <input
+                type="number"
+                value={Math.round(reinvestmentPart * 100)}
+                onChange={handleReinvestmentChange}
+                className="w-10 h-6 p-1 text-black rounded"
+                min="0"
+                max="100"
+              />
+              <span className="ml-1">% </span>
+              <div 
+                className="w-40 h-4 bg-gray-200 rounded-full overflow-hidden cursor-pointer mr-2"
+                onClick={handleReinvestmentBarClick}
+              >
+                <div
+                  className="h-full bg-green-500"
+                  style={{ width: `${reinvestmentPart * 100}%` }}
+                ></div>
+              </div>
+
+              
+            </div>
+            <div className="mb-4">Core to wallet: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
+            <div className="mb-4">Core after {coreAfterXyears} years without replenishment:</div>
+            <div className="mb-4"> {(aicoreBalance *  ((dailyCoreRate * reinvestmentPart + 1) ** 365) ** coreAfterXyears).toFixed(2)} USD</div>
+            <div className="mb-4 flex items-center">
+              <span className="mr-2">Period</span>
+              <input
+                type="number"
+                value={coreAfterXyears}
+                onChange={(e) => setCoreAfterXyears(Math.min(99, Math.max(0, parseInt(e.target.value) )))}
+                className="w-12 p-1 text-black rounded mx-1"
+                min="1"
+                max="99"
+              />
+              <span>years:</span>
+            </div>
+          </div>
+        );
       case 'wallet':
         return (
-          <div className="text-2xl flex flex-col items-center">
-            <div className="mb-4">Balance: {walletBalance.toFixed(2)} USDT</div>
-            <div className="mb-4">Income: {(aicoreBalance / 100).toFixed(2)} USDT/sec</div>
+          <div className="text-xl flex flex-col items-center">
+            <div className="mb-4">Balance: {walletBalance.toFixed(2)} USD</div>
+            <div className="mb-4">Core income: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
+            <div className="mb-4">Wallet income (11,6%): {(walletBalance * dailyWalletRate ).toFixed(2)} USD/day</div>
             <div className="flex space-x-2 mb-4">
-              <button onClick={() => handleWalletAction('topUp')} className="p-2 bg-blue-500 text-white rounded">Top up</button>
-              <button onClick={() => handleWalletAction('spend')} className="p-2 bg-yellow-500 text-black rounded">Spend</button>
-              <button onClick={() => handleWalletAction('increase')} className="p-2 bg-green-500 text-white rounded">Increase</button>
+              <button onClick={() => handleWalletAction('topUp')} className="p-2 bg-blue-500 text-white rounded">*Top up*</button>
+              <button onClick={() => handleWalletAction('withdraw')} className="p-2 bg-red-500 text-white rounded">Withdraw</button>
+              <button onClick={() => handleWalletAction('spend')} className="p-2 bg-yellow-500 text-black rounded"> *Spend*</button>
+              <button onClick={() => handleWalletAction('inCore')} className="p-2 bg-green-500 text-white rounded"> *InCore* </button>
+              
             </div>
             {walletAction && (
               <div className="flex flex-col items-center">
@@ -131,7 +197,7 @@ const App: React.FC = () => {
                   type="number"
                   value={actionAmount}
                   onChange={(e) => setActionAmount(e.target.value)}
-                  placeholder="Amount in USDT"
+                  placeholder="Amount in USD"
                   className="p-2 text-black rounded mb-2 w-full"
                 />
                 <div 
@@ -170,30 +236,45 @@ const App: React.FC = () => {
         );
       case 'earn':
         return (
-          <div className="text-2xl flex flex-col items-center">
-            <button onClick={() => handleEarn(0.1)} className="p-2 bg-yellow-500 text-black rounded mb-2 w-40">
-              Get 0.1 USDT
+          <div className="text-xl flex flex-col items-center">
+            <button onClick={() => handleEarn(0.1)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 0.1 USD
             </button>
-            <button onClick={() => handleEarn(10)} className="p-2 bg-yellow-500 text-black rounded mb-2 w-40">
-              Get 10 USDT
+            <button onClick={() => handleEarn(10)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 10 USD
             </button>
-            <button onClick={() => handleEarn(1000)} className="p-2 bg-yellow-500 text-black rounded mb-2 w-40">
-              Get 1K USDT
+            <button onClick={() => handleEarn(1000)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 1K USD
             </button>
-            <button onClick={handleReset} className="p-2 bg-red-500 text-white rounded w-40">
+            <button onClick={handleReset} className="p-2 bg-red-500 text-white rounded w-80 h-10">
               Reset
             </button>
+            <div className="text-sm flex flex-col items-start space-y-1 text-left">
+            <div className="mb-4"> </div>
+            <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
+            <div className="mb-4">🔵 Pass identification +5 USD (3d)</div>
+            <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
+            <div className="mb-4">🔵 Watch & like video +0.1 USD</div>
+            <div className="mb-4">🔵 increase AiCore +1 USD</div>
+            <div className="mb-4">🔵 top up wallet +1 USD</div>
+            <div className="mb-4">🔵 Testspend +1 USD</div>
+            <div className="mb-4">🔵 Buy 100% (360d)</div>
+            </div>
+
           </div>
+          
         );
       case 'frens':
         return <div className="text-2xl">Frens Content</div>;
       case 'goals':
         return (
           <div className="text-xl flex flex-col items-start">
-            <div className="mb-2">🔵 aicore networth</div>
-            <div className="mb-2">🔵 ai daily income</div>
+            <div className="mb-2">🔵 aissist networth | daily income </div>
             <div className="mb-2">🔵 health</div>
-            <div className="mb-2">🔵 impressions</div>
+            <div className="mb-2">🔵 skills</div> 
+            <div className="mb-2">🔵 schedule | routine | habits</div>
+            <div className="mb-2">🔵 impressions</div>  
+            <div className="mb-2">🔵 travel</div> 
             <div className="mb-2">🔵 relationship</div>
             <div className="mb-2">🔵 property</div>
             <div className="mb-2">🔵 appearance</div>
@@ -220,7 +301,7 @@ const App: React.FC = () => {
               style={{ width: `${progressPercentage}%` }}
             ></div>
             <div className="absolute inset-0 flex items-center justify-center text-xs text-white">
-              {aicoreBalance.toFixed(2)} USDT / {balanceRequiredForNextLevel[aicoreLevel]} USDT
+              Core: {aicoreBalance.toFixed(2)} USD / {balanceRequiredForNextLevel[aicoreLevel]} USD
             </div>
           </div>
           <div className="text-yellow-500 border border-yellow-500 rounded-full w-8 h-8 flex items-center justify-center">
@@ -233,6 +314,7 @@ const App: React.FC = () => {
           {renderContent()}
         </div>
         <div className="flex justify-around bg-gray-800 p-2">
+          <button onClick={() => setActiveTab('core')} className={`text-sm ${activeTab === 'core' ? 'text-yellow-500' : 'text-gray-400'}`}>Core</button>
           <button onClick={() => setActiveTab('wallet')} className={`text-sm ${activeTab === 'wallet' ? 'text-yellow-500' : 'text-gray-400'}`}>Wallet</button>
           <button onClick={() => setActiveTab('chat')} className={`text-sm ${activeTab === 'chat' ? 'text-yellow-500' : 'text-gray-400'}`}>Chat</button>
           <button onClick={() => setActiveTab('earn')} className={`text-sm ${activeTab === 'earn' ? 'text-yellow-500' : 'text-gray-400'}`}>Earn</button>
