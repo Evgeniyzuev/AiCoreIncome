@@ -271,6 +271,14 @@ const App: React.FC = () => {
             {WebApp.initDataUnsafe.user && (
               <div className="mb-4 text-xl">
                 Welcome, {WebApp.initDataUnsafe.user.first_name}!
+                <ul>
+                <li>ID: {WebApp.initDataUnsafe.user?.id}</li>
+                <li>First Name: {WebApp.initDataUnsafe.user?.first_name}</li>
+                <li>Last Name: {WebApp.initDataUnsafe.user?.last_name}</li>
+                <li>Username: {WebApp.initDataUnsafe.user?.username}</li>
+                <li>Language Code: {WebApp.initDataUnsafe.user?.language_code}</li>
+                <li>Is Premium: {WebApp.initDataUnsafe.user?.is_premium ? 'Yes' : 'No'}</li>
+                </ul>
               </div>
             )}
             <button className="p-2 bg-blue-500 text-white rounded mb-4 w-48">
