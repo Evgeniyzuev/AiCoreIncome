@@ -3,10 +3,14 @@ import './App.css';
 import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
 import WebApp from '@twa-dev/sdk';
-// import ReferralSystem from './components/ReferralSystem'
+import ReferralSystem from './components/ReferralSystem'
 
 
 const App: React.FC = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [initData, setInitData] = useState('')
+  const [userId, setUserId] = useState('')
+  const [startParam, setStartParam] = useState('')
   const [activeTab, setActiveTab] = useState('wallet');
   const [chatInput, setChatInput] = useState('');
   const [chatResponse, setChatResponse] = useState('');
@@ -20,6 +24,15 @@ const App: React.FC = () => {
   const dailyCoreRate = 0.0006;
   const dailyWalletRate = 0.0003;
   const [coreAfterXyears, setCoreAfterXyears] = useState(30);
+
+  interface UserData {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    language_code: string;
+    is_premium?: boolean;
+  }
 
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +52,27 @@ const App: React.FC = () => {
     const newLevel = balanceRequiredForNextLevel.findIndex(req => aicoreBalance < req);
     setAicoreLevel(newLevel);
   }, [aicoreBalance]);
+
+  useEffect(() => {
+    if (WebApp.initDataUnsafe.user) {
+      setUserData(WebApp.initDataUnsafe.user as UserData);
+  }
+  }, []);
+
+
+
+  useEffect(() => {
+    const initWebApp = async () => {
+        if (typeof window !== 'undefined') {
+            const webApp = (await import('@twa-dev/sdk')).default;
+            webApp.ready();
+            setInitData(webApp.initData);
+            setUserId(webApp.initDataUnsafe.user?.id.toString() || '');
+            setStartParam(webApp.initDataUnsafe.start_param || '');
+        }
+    }
+    initWebApp();
+}, []);
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,25 +302,10 @@ const App: React.FC = () => {
       case 'frens':
         return (
           <div className="flex flex-col items-center">
-            {WebApp.initDataUnsafe.user && (
-              <div className="mb-4 text-xl">
-                Welcome, {WebApp.initDataUnsafe.user.first_name}!
-                <ul>
-                <li>ID: {WebApp.initDataUnsafe.user?.id}</li>
-                <li>First Name: {WebApp.initDataUnsafe.user?.first_name}</li>
-                <li>Last Name: {WebApp.initDataUnsafe.user?.last_name}</li>
-                <li>Username: {WebApp.initDataUnsafe.user?.username}</li>
-                <li>Language Code: {WebApp.initDataUnsafe.user?.language_code}</li>
-                <li>Is Premium: {WebApp.initDataUnsafe.user?.is_premium ? 'Yes' : 'No'}</li>
-                </ul>
-              </div>
-            )}
-            <button className="p-2 bg-blue-500 text-white rounded mb-4 w-48">
-              Invite Friend
-            </button>
-            <button className="p-2 bg-green-500 text-white rounded w-48">
-              Copy Invite Link
-            </button>
+            <div>
+              Welcome, {userData?.first_name}!
+            </div>
+            <ReferralSystem initData={initData} userId={userId} startParam={startParam}/>
           </div>
         );
       case 'goals':
