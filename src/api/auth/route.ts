@@ -1,32 +1,26 @@
-import { validateTelegramWebAppData } from "../../utils/telegramAuth"
-import { SESSION_DURATION , encrypt} from "../../utils/session"
-import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
+import { NextResponse } from 'next/server'
+import { validateTelegramWebAppData } from '../../utils/telegramAuth'
+import { cookies } from 'next/headers'
+import { encrypt, SESSION_DURATION } from '../../utils/session'
 
 export async function POST(request: Request) {
-  const {initData} = await request.json()
+  const { initData } = await request.json()
 
   const validationResult = validateTelegramWebAppData(initData)
 
-  if(validationResult.validatedData) {
+  if (validationResult.validatedData) {
     console.log("Validation result: ", validationResult)
-    const user = {telegramId: validationResult.user.id}
+    const user = { telegramId: validationResult.user.id }
 
-      // Create a new session
+    // Create a new session
     const expires = new Date(Date.now() + SESSION_DURATION)
-    const session = await encrypt(JSON.stringify({ user, expires }))
+    const session = await encrypt({ user, expires })
 
-    // Save session to cookies
-    cookies().set("session", session, {expires, httpOnly: true})
+    // Save the session in a cookie
+    cookies().set("session", session, { expires, httpOnly: true })
 
-    return NextResponse.json({ message: "Telegram data is valid"})
-
-
-
+    return NextResponse.json({ message: 'Authentication successful' })
   } else {
-    return NextResponse.json({ message: validationResult.message}, {status: 401})
+    return NextResponse.json({ message: validationResult.message }, { status: 401 })
   }
-
-
-  // Use isValid in your response logic
 }
