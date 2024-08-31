@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
+import WebApp from '@twa-dev/sdk';
+// import ReferralSystem from './components/ReferralSystem'
+
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('wallet');
@@ -256,8 +259,6 @@ const App: React.FC = () => {
             <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
             <div className="mb-4">🔵 Watch & like video +0.1 USD</div>
             <div className="mb-4">🔵 increase AiCore +1 USD</div>
-            <div className="mb-4">🔵 top up wallet +1 USD</div>
-            <div className="mb-4">🔵 Testspend +1 USD</div>
             <div className="mb-4">🔵 Buy 100% (360d)</div>
             </div>
 
@@ -265,7 +266,21 @@ const App: React.FC = () => {
           
         );
       case 'frens':
-        return <div className="text-2xl">Frens Content</div>;
+        return (
+          <div className="flex flex-col items-center">
+            {WebApp.initDataUnsafe.user && (
+              <div className="mb-4 text-xl">
+                Welcome, {WebApp.initDataUnsafe.user.first_name}!
+              </div>
+            )}
+            <button className="p-2 bg-blue-500 text-white rounded mb-4 w-48">
+              Invite Friend
+            </button>
+            <button className="p-2 bg-green-500 text-white rounded w-48">
+              Copy Invite Link
+            </button>
+          </div>
+        );
       case 'goals':
         return (
           <div className="text-xl flex flex-col items-start">
