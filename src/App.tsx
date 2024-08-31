@@ -285,12 +285,12 @@ const App: React.FC = () => {
               Reset
             </button>
             <div className="text-sm flex flex-col items-start space-y-1 text-left">
+            <div className="mb-4"></div>
             <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
             <div className="mb-4">🔵 Pass identification +5 USD (3d)</div>
             <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
             <div className="mb-4">🔵 Watch & like video +0.1 USD</div>
             <div className="mb-4">🔵 increase AiCore +1 USD</div>
-            <div className="mb-4">🔵 Buy 100% (360d)</div>
             </div>
 
           </div>
@@ -320,10 +320,10 @@ const App: React.FC = () => {
             <div>🔵 personal</div>
           </div>
         );
-      case 'demo':
+      case 'test':
         return (
           <div className="w-full h-full">
-            <iframe src="/page" className="w-full h-full border-none" title="Demo Page"></iframe>
+            <iframe src="/page" className="w-full h-full border-none" title="test Page"></iframe>
           </div>
         );
       default:
@@ -365,7 +365,7 @@ const App: React.FC = () => {
           <button onClick={() => setActiveTab('earn')} className={`text-sm ${activeTab === 'earn' ? 'text-yellow-500' : 'text-gray-400'}`}>Earn</button>
           <button onClick={() => setActiveTab('frens')} className={`text-sm ${activeTab === 'frens' ? 'text-yellow-500' : 'text-gray-400'}`}>Frens</button>
           <button onClick={() => setActiveTab('goals')} className={`text-sm ${activeTab === 'goals' ? 'text-yellow-500' : 'text-gray-400'}`}>Goals</button>
-          <button onClick={() => setActiveTab('demo')} className={`text-sm ${activeTab === 'demo' ? 'text-yellow-500' : 'text-gray-400'}`}>Demo</button>
+          <button onClick={() => setActiveTab('test')} className={`text-sm ${activeTab === 'test' ? 'text-yellow-500' : 'text-gray-400'}`}>test</button>
         </div>
       </div>
     </div>
