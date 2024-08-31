@@ -12,6 +12,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
   const [referrer, setReferrer] = useState<string | null>(null)
   const INVITE_URL = "https://t.me/referral_showcase_bot/start"
 
+
   useEffect(() => {
     const checkReferral = async () => {
       if (startParam && userId) {
@@ -63,7 +64,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
   return (
     <div className="w-full max-w-md">
       {referrer && (
-        <p className="text-green-500 mb-4">You were referred by user {referrer}</p>
+        <p className="text-green-500 mb-4">You were referred by user {referrer} {initData}</p>
       )}
       <div className="flex flex-col space-y-4">
         <button
