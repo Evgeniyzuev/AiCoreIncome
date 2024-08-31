@@ -4,8 +4,6 @@ import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
 import WebApp from '@twa-dev/sdk';
 import ReferralSystem from './components/ReferralSystem'
-import TelegramAuth from './components/TelegramAuth'
-import { getSession } from './utils/session'
 
 const App: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -25,9 +23,7 @@ const App: React.FC = () => {
   const dailyCoreRate = 0.0006;
   const dailyWalletRate = 0.0003;
   const [coreAfterXyears, setCoreAfterXyears] = useState(30);
-  const session = async () => {
-    await getSession()
-}
+
 
   interface UserData {
     id: number;
@@ -305,8 +301,6 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center">
             <div>
               Welcome, {userData?.first_name}!
-              <pre>{JSON.stringify(session, null, 2)}</pre>
-              <TelegramAuth />
             </div>
             <ReferralSystem initData={initData} userId={userId} startParam={startParam}/>
           </div>
