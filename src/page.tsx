@@ -3,6 +3,8 @@
 import  WebApp  from '@twa-dev/sdk';
 import { useState, useEffect } from 'react';
 import ReferralSystem from './components/ReferralSystem';
+import { getSession } from './utils/session'
+import TelegramAuth from './components/TelegramAuth'
 
 interface UserData {
   id: number;
@@ -13,11 +15,16 @@ interface UserData {
   is_premium?: boolean;
 }
 
+
+
 export default function Home() {
     const [userData, setUserData] = useState<UserData | null>(null);
     const [initData, setInitData] = useState('')
     const [userId, setUserId] = useState('')
     const [startParam, setStartParam] = useState('')
+    const session = async () => {
+        await getSession()
+    }
     
     useEffect(() => {
         if (WebApp.initDataUnsafe.user) {
@@ -37,6 +44,9 @@ export default function Home() {
     
     return (
         <main className="p-4">
+            <h1 className="text-4xl font-bold mb-8">Jwt Authentication for Telegram Mini Apps</h1>
+            <pre>{JSON.stringify(session, null, 2)}</pre>
+            <TelegramAuth />
             <ReferralSystem initData={initData} userId={userId} startParam={startParam}/>
             {userData ? (
                 <ul>

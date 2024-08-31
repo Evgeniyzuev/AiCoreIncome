@@ -4,7 +4,8 @@ import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
 import WebApp from '@twa-dev/sdk';
 import ReferralSystem from './components/ReferralSystem'
-
+import TelegramAuth from './components/TelegramAuth'
+import { getSession } from './utils/session'
 
 const App: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -24,6 +25,9 @@ const App: React.FC = () => {
   const dailyCoreRate = 0.0006;
   const dailyWalletRate = 0.0003;
   const [coreAfterXyears, setCoreAfterXyears] = useState(30);
+  const session = async () => {
+    await getSession()
+}
 
   interface UserData {
     id: number;
@@ -58,8 +62,6 @@ const App: React.FC = () => {
       setUserData(WebApp.initDataUnsafe.user as UserData);
   }
   }, []);
-
-
 
   useEffect(() => {
     const initWebApp = async () => {
@@ -287,7 +289,6 @@ const App: React.FC = () => {
               Reset
             </button>
             <div className="text-sm flex flex-col items-start space-y-1 text-left">
-            <div className="mb-4"> </div>
             <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
             <div className="mb-4">🔵 Pass identification +5 USD (3d)</div>
             <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
@@ -304,6 +305,8 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center">
             <div>
               Welcome, {userData?.first_name}!
+              <pre>{JSON.stringify(session, null, 2)}</pre>
+              <TelegramAuth />
             </div>
             <ReferralSystem initData={initData} userId={userId} startParam={startParam}/>
           </div>
