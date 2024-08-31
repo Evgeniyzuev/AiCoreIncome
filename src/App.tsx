@@ -320,6 +320,12 @@ const App: React.FC = () => {
             <div>🔵 personal</div>
           </div>
         );
+      case 'demo':
+        return (
+          <div className="w-full h-full">
+            <iframe src="/page" className="w-full h-full border-none" title="Demo Page"></iframe>
+          </div>
+        );
       default:
         return null;
     }
@@ -359,6 +365,7 @@ const App: React.FC = () => {
           <button onClick={() => setActiveTab('earn')} className={`text-sm ${activeTab === 'earn' ? 'text-yellow-500' : 'text-gray-400'}`}>Earn</button>
           <button onClick={() => setActiveTab('frens')} className={`text-sm ${activeTab === 'frens' ? 'text-yellow-500' : 'text-gray-400'}`}>Frens</button>
           <button onClick={() => setActiveTab('goals')} className={`text-sm ${activeTab === 'goals' ? 'text-yellow-500' : 'text-gray-400'}`}>Goals</button>
+          <button onClick={() => setActiveTab('demo')} className={`text-sm ${activeTab === 'demo' ? 'text-yellow-500' : 'text-gray-400'}`}>Demo</button>
         </div>
       </div>
     </div>
