@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
@@ -24,8 +24,8 @@ const App: React.FC = () => {
   const dailyWalletRate = 0.0003;
   const [coreAfterXyears, setCoreAfterXyears] = useState(30);
   const [dayCount, setDayCount] = useState(0);
-  const [coreIncome, setCoreIncome] = useState(0);
-  const [walletIncome, setWalletIncome] = useState(0);
+  const [_coreIncome, setCoreIncome] = useState(0);
+  const [_walletIncome, setWalletIncome] = useState(0);
   const [daysToSkip, setDaysToSkip] = useState(1);
   const [sendToExternal, setSendToExternal] = useState(0);
   const [withdrawRate, setWithdrawRate] = useState(0);
@@ -171,21 +171,6 @@ const App: React.FC = () => {
     setDayCount(prevCount => prevCount + daysToSkip);
     setCoreIncome(aicoreBalance * dailyCoreRate);
     setWalletIncome(walletBalance * dailyWalletRate);
-  };
-
-  const handleNextDay = () => {
-    setDayCount(prevCount => prevCount + 1);
-    const newCoreIncome = aicoreBalance * dailyCoreRate;
-    const newWalletIncome = walletBalance * dailyWalletRate;
-    
-    setAicoreBalance(prevBalance => 
-      parseFloat((prevBalance + newCoreIncome * reinvestmentPart).toFixed(10))
-    );
-    setWalletBalance(prevBalance => 
-      parseFloat((prevBalance + newWalletIncome + newCoreIncome * (1 - reinvestmentPart)).toFixed(10))
-    );
-    setCoreIncome(newCoreIncome);
-    setWalletIncome(newWalletIncome);
   };
 
   useEffect(() => {
