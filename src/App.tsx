@@ -23,6 +23,13 @@ const App: React.FC = () => {
   const dailyCoreRate = 0.0006;
   const dailyWalletRate = 0.0003;
   const [coreAfterXyears, setCoreAfterXyears] = useState(30);
+  const [dayCount, setDayCount] = useState(0);
+  const [coreIncome, setCoreIncome] = useState(0);
+  const [walletIncome, setWalletIncome] = useState(0);
+  const [daysToSkip, setDaysToSkip] = useState(1);
+  const [sendToExternal, setSendToExternal] = useState(0);
+  const [withdrawRate, setWithdrawRate] = useState(0);
+  const [sentToCommunity, setSentToCommunity] = useState(0);
 
 
   interface UserData {
@@ -34,19 +41,8 @@ const App: React.FC = () => {
     is_premium?: boolean;
   }
 
-  const progressBarRef = useRef<HTMLDivElement>(null);
 
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (progressBarRef.current) {
-      const rect = progressBarRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = (x / rect.width) * 100;
-      const amount = (percentage / 100) * walletBalance;
-      setActionAmount(amount.toFixed(2));
-    }
-  };
-
-  const balanceRequiredForNextLevel = Array(30).fill(0).map((_, index) => Math.pow(2, index));
+  const balanceRequiredForNextLevel = Array(50).fill(0).map((_, index) => Math.pow(2, index));
 
   useEffect(() => {
     const newLevel = balanceRequiredForNextLevel.findIndex(req => aicoreBalance < req);
@@ -86,6 +82,7 @@ const App: React.FC = () => {
     setAicoreBalance(0);
     setAicoreLevel(0);
     setWalletBalance(0);
+    setDayCount(0);
   };
 
   const handleWalletAction = (action: 'topUp' | 'spend' | 'inCore' | 'withdraw') => {
@@ -99,7 +96,7 @@ const App: React.FC = () => {
         setActionMessage('Spend');
         break;
       case 'withdraw':
-        setActionMessage('Withdraw 10%');
+        setActionMessage(`Withdraw Rate ${(withdrawRate * 100).toFixed(2)}%`);
         break;
       case 'inCore':
         setActionMessage('Increase AiCore');
@@ -116,29 +113,31 @@ const App: React.FC = () => {
 
     switch (walletAction) {
       case 'topUp':
-        setWalletBalance(prev => prev + amount);
+        setWalletBalance(prev => parseFloat((prev + amount).toFixed(10)));
         break;
       case 'spend':
         if (amount > walletBalance) {
           alert('Insufficient funds');
           return;
         }
-        setWalletBalance(prev => prev - amount);
+        setWalletBalance(prev => parseFloat((prev - amount).toFixed(10)));
         break;
       case 'withdraw':
         if (amount > walletBalance) {
           alert('Insufficient funds');
           return;
         }
-        setWalletBalance(prev => prev - amount);
+        setWalletBalance(prev => parseFloat((prev - amount).toFixed(10)));
+        setSendToExternal(prev => parseFloat((prev + amount * withdrawRate).toFixed(10)));
+        setSentToCommunity(prev => parseFloat((prev + amount * (1 - withdrawRate)).toFixed(10)));
         break;
       case 'inCore':
         if (amount > walletBalance) {
           alert('Insufficient funds');
           return;
         }
-        setWalletBalance(prev => prev - amount);
-        setAicoreBalance(prev => prev + amount);
+        setWalletBalance(prev => parseFloat((prev - amount).toFixed(10)));
+        setAicoreBalance(prev => parseFloat((prev + amount).toFixed(10)));
         break;
     }
 
@@ -154,17 +153,49 @@ const App: React.FC = () => {
   };
 
   const handleReinvestmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
+    const value = Math.min(100, Math.max(0, parseInt(e.target.value)));
     setReinvestmentPart(value / 100);
   };
 
-  const handleReinvestmentBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bar = e.currentTarget;
-    const rect = bar.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = (x / rect.width) * 100;
-    setReinvestmentPart(percentage / 100);
+  const handleSkipDays = () => {
+    const newCoreIncome = aicoreBalance * (Math.pow(1 + dailyCoreRate * reinvestmentPart, daysToSkip) - 1);
+    const newWalletIncome = walletBalance * (Math.pow(1 + dailyWalletRate, daysToSkip) - 1);
+    const coreToWallet = aicoreBalance * (Math.pow(1 + dailyCoreRate, daysToSkip) - Math.pow(1 + dailyCoreRate * reinvestmentPart, daysToSkip));
+
+    setAicoreBalance(prevBalance => 
+      parseFloat((prevBalance + newCoreIncome).toFixed(10))
+    );
+    setWalletBalance(prevBalance => 
+      parseFloat((prevBalance + newWalletIncome + coreToWallet).toFixed(10))
+    );
+    setDayCount(prevCount => prevCount + daysToSkip);
+    setCoreIncome(aicoreBalance * dailyCoreRate);
+    setWalletIncome(walletBalance * dailyWalletRate);
   };
+
+  const handleNextDay = () => {
+    setDayCount(prevCount => prevCount + 1);
+    const newCoreIncome = aicoreBalance * dailyCoreRate;
+    const newWalletIncome = walletBalance * dailyWalletRate;
+    
+    setAicoreBalance(prevBalance => 
+      parseFloat((prevBalance + newCoreIncome * reinvestmentPart).toFixed(10))
+    );
+    setWalletBalance(prevBalance => 
+      parseFloat((prevBalance + newWalletIncome + newCoreIncome * (1 - reinvestmentPart)).toFixed(10))
+    );
+    setCoreIncome(newCoreIncome);
+    setWalletIncome(newWalletIncome);
+  };
+
+  useEffect(() => {
+    if (dayCount <= 400) {
+      setWithdrawRate(Math.min(0.4, dayCount * 0.001));
+    } else {
+      setWithdrawRate((dayCount - 160) / (dayCount + 200));
+    }
+  }, [dayCount]);
+
 
   const renderContent = () => {
     switch (activeTab) {
@@ -178,14 +209,22 @@ const App: React.FC = () => {
                 type="number"
                 value={Math.round(reinvestmentPart * 100)}
                 onChange={handleReinvestmentChange}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.value.length > 3) {
+                    target.value = target.value.slice(0, 3);
+                  }
+                  if (parseInt(target.value) > 100) {
+                    target.value = '100';
+                  }
+                }}
                 className="w-10 h-6 p-1 text-black rounded"
                 min="0"
                 max="100"
               />
               <span className="ml-1">% </span>
               <div 
-                className="w-40 h-4 bg-gray-200 rounded-full overflow-hidden cursor-pointer mr-2"
-                onClick={handleReinvestmentBarClick}
+                className="w-40 h-4 bg-gray-200 rounded-full overflow-hidden mr-2"
               >
                 <div
                   className="h-full bg-green-500"
@@ -214,10 +253,12 @@ const App: React.FC = () => {
         );
       case 'wallet':
         return (
-          <div className="text-xl flex flex-col items-center">
+          <div className="text-xl flex flex-col items-center self-start w-full p-4">
             <div className="mb-4">Balance: {walletBalance.toFixed(2)} USD</div>
             <div className="mb-4">Core income: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
             <div className="mb-4">Wallet income (11,6%): {(walletBalance * dailyWalletRate ).toFixed(2)} USD/day</div>
+            <div className="mb-4">Sent to external wallet: {sendToExternal.toFixed(2)} USD</div>
+            <div className="mb-4">Sent to community: {sentToCommunity.toFixed(2)} USD</div>
             <div className="flex space-x-2 mb-4">
               <button onClick={() => handleWalletAction('topUp')} className="p-2 bg-blue-500 text-white rounded">*Top up*</button>
               <button onClick={() => handleWalletAction('withdraw')} className="p-2 bg-red-500 text-white rounded">Withdraw</button>
@@ -228,26 +269,16 @@ const App: React.FC = () => {
             {walletAction && (
               <div className="flex flex-col items-center">
                 <div className="mb-2">{actionMessage}</div>
-                <input
-                  type="number"
-                  value={actionAmount}
-                  onChange={(e) => setActionAmount(e.target.value)}
-                  placeholder="Amount in USD"
-                  className="p-2 text-black rounded mb-2 w-full"
-                />
-                <div 
-                  ref={progressBarRef}
-                  className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-2 cursor-pointer"
-                  onClick={handleProgressBarClick}
-                >
-                  <div
-                    className="h-full bg-blue-500"
-                    style={{ width: `${Math.min((parseFloat(actionAmount) / walletBalance) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <div className="flex space-x-2">
-                  <button onClick={handleActionConfirm} className="p-2 bg-green-500 text-white rounded">✓</button>
-                  <button onClick={handleActionCancel} className="p-2 bg-red-500 text-white rounded">✗</button>
+                <div className="flex items-center w-full">
+                  <button onClick={handleActionCancel} className="p-2 bg-red-500 text-white rounded w-11 h-11 mr-2">✗</button>
+                  <input
+                    type="number"
+                    value={actionAmount}
+                    onChange={(e) => setActionAmount(e.target.value)}
+                    placeholder="Amount in USD"
+                    className="p-2 text-black rounded flex-grow"
+                  />
+                  <button onClick={handleActionConfirm} className="p-2 bg-green-500 text-white rounded w-11 h-11 ml-2">✓</button>
                 </div>
               </div>
             )}
@@ -272,29 +303,15 @@ const App: React.FC = () => {
       case 'earn':
         return (
           <div className="text-xl flex flex-col items-center">
-            <button onClick={() => handleEarn(0.1)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
-              Get 0.1 USD
-            </button>
-            <button onClick={() => handleEarn(10)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
-              Get 10 USD
-            </button>
-            <button onClick={() => handleEarn(1000)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
-              Get 1K USD
-            </button>
-            <button onClick={handleReset} className="p-2 bg-red-500 text-white rounded w-80 h-10">
-              Reset
-            </button>
             <div className="text-sm flex flex-col items-start space-y-1 text-left">
-            <div className="mb-4"></div>
-            <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
-            <div className="mb-4">🔵 Pass identification +5 USD (3d)</div>
-            <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
-            <div className="mb-4">🔵 Watch & like video +0.1 USD</div>
-            <div className="mb-4">🔵 increase AiCore +1 USD</div>
+              <div className="mb-4"></div>
+              <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
+              <div className="mb-4">🔵 Pass identification +5 USD (3d)</div>
+              <div className="mb-4">🔵 Referral +1 USD / unidentified +0.1 USD (30d)</div>
+              <div className="mb-4">🔵 Watch & like video +0.1 USD</div>
+              <div className="mb-4">🔵 increase AiCore +1 USD</div>
             </div>
-
           </div>
-          
         );
       case 'frens':
         return (
@@ -322,8 +339,37 @@ const App: React.FC = () => {
         );
       case 'test':
         return (
-          <div className="w-full h-full">
-            <iframe src="/page" className="w-full h-full border-none" title="test Page"></iframe>
+          <div className="text-xl flex flex-col items-center">
+            <div className="flex items-center mb-4">
+              <span className="mr-2">Day: {dayCount}</span>
+              <button 
+                onClick={handleSkipDays} 
+                className="p-2 bg-blue-500 text-white rounded mr-2"
+              >
+                Skip Days
+              </button>
+              <input
+                type="number"
+                value={daysToSkip}
+                onChange={(e) => setDaysToSkip(Math.min(999, Math.max(0, parseInt(e.target.value) )))}
+                className="w-16 p-1 text-black rounded"
+                min="1"
+                max="999"
+              />
+            </div>
+
+            <button onClick={() => handleEarn(0.1)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 0.1 USD
+            </button>
+            <button onClick={() => handleEarn(10)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 10 USD
+            </button>
+            <button onClick={() => handleEarn(1000)} className="p-2 bg-green-500 text-black rounded mb-2 w-80">
+              Get 1K USD
+            </button>
+            <button onClick={handleReset} className="p-2 bg-red-500 text-white rounded w-80 h-10 mb-4">
+              Reset
+            </button>
           </div>
         );
       default:
@@ -340,13 +386,13 @@ const App: React.FC = () => {
       <div className="h-1/2 flex items-center justify-center overflow-hidden relative">
         <img src={currentImage} alt="AI Assistant" className="w-full h-full object-cover" />
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center">
-          <div className="relative w-64 h-4 bg-gray-700 bg-opacity-50 rounded-full overflow-hidden mr-2">
+          <div className="relative w-80 h-4 bg-gray-700 bg-opacity-50 rounded-full overflow-hidden mr-2">
             <div
               className="absolute top-0 left-0 h-full bg-yellow-500 bg-opacity-50"
               style={{ width: `${progressPercentage}%` }}
             ></div>
             <div className="absolute inset-0 flex items-center justify-center text-xs text-white">
-              Core: {aicoreBalance.toFixed(2)} USD / {balanceRequiredForNextLevel[aicoreLevel]} USD
+              {aicoreBalance.toFixed(2)} USD / {balanceRequiredForNextLevel[aicoreLevel]} USD
             </div>
           </div>
           <div className="text-yellow-500 border border-yellow-500 rounded-full w-8 h-8 flex items-center justify-center">
