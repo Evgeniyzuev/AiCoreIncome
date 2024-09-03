@@ -4,6 +4,13 @@ import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
 import WebApp from '@twa-dev/sdk';
 import ReferralSystem from './components/ReferralSystem'
+import { saveUserData, getUserData } from './utils/edgedb';
+
+interface EdgeDBUserData {
+  aicore_balance: number;
+  wallet_balance: number;
+  day_count: number;
+}
 
 const App: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -57,16 +64,27 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initWebApp = async () => {
-        if (typeof window !== 'undefined') {
-            const webApp = (await import('@twa-dev/sdk')).default;
-            webApp.ready();
-            setInitData(webApp.initData);
-            setUserId(webApp.initDataUnsafe.user?.id.toString() || '');
-            setStartParam(webApp.initDataUnsafe.start_param || '');
+      if (typeof window !== 'undefined') {
+        const webApp = (await import('@twa-dev/sdk')).default;
+        webApp.ready();
+        setInitData(webApp.initData);
+        const userId = webApp.initDataUnsafe.user?.id.toString() || '';
+        setUserId(userId);
+        setStartParam(webApp.initDataUnsafe.start_param || '');
+
+        // Load user data from EdgeDB
+        if (userId) {
+          const userData = await getUserData(userId) as EdgeDBUserData;
+          if (userData) {
+            setAicoreBalance(userData.aicore_balance);
+            setWalletBalance(userData.wallet_balance);
+            setDayCount(userData.day_count);
+          }
         }
+      }
     }
     initWebApp();
-}, []);
+  }, []);
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,7 +204,7 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'core':
         return (
-          <div className="text-xl flex flex-col items-center">
+          <div className="text-lg flex flex-col items-center justify-start self-center w-full h-full pt-4">
             <div className="mb-4">Core rate (24,5%): {(aicoreBalance * dailyCoreRate).toFixed(2)} USD/day</div>
             <div className="mb-4 flex items-center">
               <span className="mr-2">Reinvest</span>
@@ -271,7 +289,7 @@ const App: React.FC = () => {
         );
       case 'chat':
         return (
-          <div className="text-2xl">
+          <div className="text-lg">
             <form onSubmit={handleChatSubmit}>
               <input
                 type="text"
@@ -287,7 +305,7 @@ const App: React.FC = () => {
         );
       case 'earn':
         return (
-          <div className="text-xl flex flex-col items-center">
+          <div className="text-lg flex flex-col items-center">
             <div className="text-sm flex flex-col items-start space-y-1 text-left">
               <div className="mb-4"></div>
               <div className="mb-4">🔵 Subscribe +0.1 USD (30d)</div>
@@ -309,22 +327,22 @@ const App: React.FC = () => {
         );
       case 'goals':
         return (
-          <div className="text-xl flex flex-col items-start">
-            <div className="mb-2">🔵 aissist networth | daily income </div>
-            <div className="mb-2">🔵 health</div>
-            <div className="mb-2">🔵 skills</div> 
-            <div className="mb-2">🔵 schedule | routine | habits</div>
-            <div className="mb-2">🔵 impressions</div>  
-            <div className="mb-2">🔵 travel</div> 
-            <div className="mb-2">🔵 relationship</div>
-            <div className="mb-2">🔵 property</div>
-            <div className="mb-2">🔵 appearance</div>
+          <div className="text-sm flex flex-col items-start">
+            <div className="mb-1">🔵 aissist networth | daily income </div>
+            <div className="mb-1">🔵 health</div>
+            <div className="mb-1">🔵 skills</div> 
+            <div className="mb-1">🔵 schedule | routine | habits</div>
+            <div className="mb-1">🔵 impressions</div>  
+            <div className="mb-1">🔵 travel</div> 
+            <div className="mb-1">🔵 relationship</div>
+            <div className="mb-1">🔵 property</div>
+            <div className="mb-1">🔵 appearance</div>
             <div>🔵 personal</div>
           </div>
         );
       case 'test':
         return (
-          <div className="text-xl flex flex-col items-center">
+          <div className="text-lg flex flex-col items-center">
             <div className="flex items-center mb-4">
               <span className="mr-2">Day: {dayCount}</span>
               <button 
@@ -365,6 +383,16 @@ const App: React.FC = () => {
   const progressPercentage = (aicoreBalance / balanceRequiredForNextLevel[aicoreLevel]) * 100;
 
   const currentImage = aicoreLevel > 1 ? aissist2 : aissist;
+
+  const saveUserDataToEdgeDB = async () => {
+    if (userId) {
+      await saveUserData(userId, aicoreBalance, walletBalance, dayCount);
+    }
+  };
+
+  useEffect(() => {
+    saveUserDataToEdgeDB();
+  }, [aicoreBalance, walletBalance, dayCount, userId]);
 
   return (
     <div className="bg-black text-white h-screen flex flex-col">
