@@ -149,6 +149,9 @@ const App: React.FC = () => {
     setWalletAction(null);
     setActionAmount('');
     setActionMessage('');
+    
+    // Save data to CloudStorage after the action is confirmed
+    saveDataToCloudStorage();
   };
 
   const handleActionCancel = () => {
@@ -167,23 +170,19 @@ const App: React.FC = () => {
     const newWalletIncome = walletBalance * (Math.pow(1 + dailyWalletRate, daysToSkip) - 1);
     const coreToWallet = aicoreBalance * (Math.pow(1 + dailyCoreRate, daysToSkip) - Math.pow(1 + dailyCoreRate * reinvestmentPart, daysToSkip));
 
-    setAicoreBalance(prevBalance => {
-      const newBalance = parseFloat((prevBalance + newCoreIncome).toFixed(10));
-      saveDataToCloudStorage();
-      return newBalance;
-    });
-    setWalletBalance(prevBalance => {
-      const newBalance = parseFloat((prevBalance + newWalletIncome + coreToWallet).toFixed(10));
-      saveDataToCloudStorage();
-      return newBalance;
-    });
-    setDayCount(prevCount => {
-      const newCount = prevCount + daysToSkip;
-      saveDataToCloudStorage();
-      return newCount;
-    });
+    const newAicoreBalance = parseFloat((aicoreBalance + newCoreIncome).toFixed(10));
+    const newWalletBalance = parseFloat((walletBalance + newWalletIncome + coreToWallet).toFixed(10));
+    const newDayCount = dayCount + daysToSkip;
+
+    setAicoreBalance(newAicoreBalance);
+    setWalletBalance(newWalletBalance);
+    setDayCount(newDayCount);
     setCoreIncome(aicoreBalance * dailyCoreRate);
     setWalletIncome(walletBalance * dailyWalletRate);
+
+    // Save all updated data at once
+    // Если необходимо, добавьте небольшую задержку
+    setTimeout(saveDataToCloudStorage, 200);
   };
 
   useEffect(() => {
@@ -199,7 +198,9 @@ const App: React.FC = () => {
       const data = JSON.stringify({
         aiCoreBalance: aicoreBalance,
         walletBalance: walletBalance,
-        dayCount: dayCount
+        dayCount: dayCount,
+        sendToExternal: sendToExternal,
+        sentToCommunity: sentToCommunity
       });
       
       if (WebApp.CloudStorage && typeof WebApp.CloudStorage.setItem === 'function') {
@@ -228,6 +229,8 @@ const App: React.FC = () => {
           setAicoreBalance(data.aiCoreBalance);
           setWalletBalance(data.walletBalance);
           setDayCount(data.dayCount);
+          setSendToExternal(data.sendToExternal);
+          setSentToCommunity(data.sentToCommunity);
           console.log('Data loaded successfully');
         } catch (e) {
           console.error('Error parsing loaded data:', e);
