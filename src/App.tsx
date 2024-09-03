@@ -75,7 +75,11 @@ const App: React.FC = () => {
   };
 
   const handleEarn = (amount: number) => {
-    setAicoreBalance(prevBalance => parseFloat((prevBalance + amount).toFixed(2)));
+    setAicoreBalance(prevBalance => {
+      const newBalance = parseFloat((prevBalance + amount).toFixed(2));
+      saveDataToCloudStorage();
+      return newBalance;
+    });
   };
 
   const handleReset = () => {
@@ -83,6 +87,7 @@ const App: React.FC = () => {
     setAicoreLevel(0);
     setWalletBalance(0);
     setDayCount(0);
+    saveDataToCloudStorage();
   };
 
   const handleWalletAction = (action: 'topUp' | 'spend' | 'inCore' | 'withdraw') => {
@@ -162,13 +167,21 @@ const App: React.FC = () => {
     const newWalletIncome = walletBalance * (Math.pow(1 + dailyWalletRate, daysToSkip) - 1);
     const coreToWallet = aicoreBalance * (Math.pow(1 + dailyCoreRate, daysToSkip) - Math.pow(1 + dailyCoreRate * reinvestmentPart, daysToSkip));
 
-    setAicoreBalance(prevBalance => 
-      parseFloat((prevBalance + newCoreIncome).toFixed(10))
-    );
-    setWalletBalance(prevBalance => 
-      parseFloat((prevBalance + newWalletIncome + coreToWallet).toFixed(10))
-    );
-    setDayCount(prevCount => prevCount + daysToSkip);
+    setAicoreBalance(prevBalance => {
+      const newBalance = parseFloat((prevBalance + newCoreIncome).toFixed(10));
+      saveDataToCloudStorage();
+      return newBalance;
+    });
+    setWalletBalance(prevBalance => {
+      const newBalance = parseFloat((prevBalance + newWalletIncome + coreToWallet).toFixed(10));
+      saveDataToCloudStorage();
+      return newBalance;
+    });
+    setDayCount(prevCount => {
+      const newCount = prevCount + daysToSkip;
+      saveDataToCloudStorage();
+      return newCount;
+    });
     setCoreIncome(aicoreBalance * dailyCoreRate);
     setWalletIncome(walletBalance * dailyWalletRate);
   };
@@ -181,6 +194,49 @@ const App: React.FC = () => {
     }
   }, [dayCount]);
 
+  const saveDataToCloudStorage = () => {
+    try {
+      const data = JSON.stringify({
+        aiCoreBalance: aicoreBalance,
+        walletBalance: walletBalance,
+        dayCount: dayCount
+      });
+      
+      if (WebApp.CloudStorage && typeof WebApp.CloudStorage.setItem === 'function') {
+        WebApp.CloudStorage.setItem('userData', data, (error) => {
+          if (error) {
+            console.error('Error saving data:', error);
+          } else {
+            console.log('Data saved successfully');
+          }
+        });
+      } else {
+        console.warn('CloudStorage is not available');
+      }
+    } catch (error) {
+      console.error('Error in saveDataToCloudStorage:', error);
+    }
+  };
+
+  const handleLoadData = () => {
+    WebApp.CloudStorage.getItem('userData', (error, value) => {
+      if (error) {
+        console.error('Error loading data:', error);
+      } else if (value) {
+        try {
+          const data = JSON.parse(value);
+          setAicoreBalance(data.aiCoreBalance);
+          setWalletBalance(data.walletBalance);
+          setDayCount(data.dayCount);
+          console.log('Data loaded successfully');
+        } catch (e) {
+          console.error('Error parsing loaded data:', e);
+        }
+      } else {
+        console.log('No data found in CloudStorage');
+      }
+    });
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -228,7 +284,7 @@ const App: React.FC = () => {
                 type="number"
                 value={coreAfterXyears}
                 onChange={(e) => setCoreAfterXyears(Math.min(99, Math.max(0, parseInt(e.target.value) )))}
-                className="w-12 p-1 text-black rounded mx-1"
+                className="w-8 h-6 p-1 text-black rounded mx-1"
                 min="1"
                 max="99"
               />
@@ -354,6 +410,9 @@ const App: React.FC = () => {
             </button>
             <button onClick={handleReset} className="p-2 bg-red-500 text-white rounded w-80 h-10 mb-4">
               Reset
+            </button>
+            <button onClick={handleLoadData} className="p-2 bg-yellow-500 text-black rounded w-80 h-10 mb-4">
+              Load Data
             </button>
           </div>
         );
