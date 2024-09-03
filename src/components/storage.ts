@@ -13,7 +13,7 @@ export function saveReferral(userId: string, referrerId: string) {
         storage.referrals[referrerId] = [];
     }
     storage.referrals[referrerId].push(userId);
-    storage.referredBy[referrerId] = referrerId;
+    storage.referredBy[userId] = referrerId;
 }
 
 export function getReferrals(userId: string) {
