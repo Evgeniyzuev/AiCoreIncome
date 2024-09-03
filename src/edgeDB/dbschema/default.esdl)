@@ -1,8 +1,0 @@
-module default {
-  type User {
-    required property telegram_id -> str;
-    property aicore_balance -> float64;
-    property wallet_balance -> float64;
-    property day_count -> int64;
-  }
-}
