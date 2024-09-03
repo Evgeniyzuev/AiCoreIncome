@@ -238,11 +238,11 @@ const App: React.FC = () => {
         );
       case 'wallet':
         return (
-          <div className="text-lg flex flex-col items-center self-start w-full p-4">
-            <div className="mb-4">Balance: {walletBalance.toFixed(2)} USD</div>
-            <div className="mb-4">Core income: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
-            <div className="mb-4">Wallet income (11,6%): {(walletBalance * dailyWalletRate ).toFixed(2)} USD/day</div>
-            <div className="mb-4">Sent to external wallet: {sendToExternal.toFixed(2)} USD</div>
+          <div className="text-base flex flex-col items-center self-start w-full p-4">
+            <div className="mb-0">Balance: {walletBalance.toFixed(2)} USD</div>
+            <div className="mb-0">Core income: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
+            <div className="mb-0">Wallet income (11,6%): {(walletBalance * dailyWalletRate ).toFixed(2)} USD/day</div>
+            <div className="mb-0">Sent to external wallet: {sendToExternal.toFixed(2)} USD</div>
             <div className="mb-4">Sent to community: {sentToCommunity.toFixed(2)} USD</div>
             <div className="flex space-x-2 mb-4">
               <button onClick={() => handleWalletAction('topUp')} className="p-2 bg-blue-500 text-white rounded">Top up</button>
@@ -309,16 +309,16 @@ const App: React.FC = () => {
         );
       case 'goals':
         return (
-          <div className="text-xl flex flex-col items-start">
-            <div className="mb-2">🔵 aissist networth | daily income </div>
-            <div className="mb-2">🔵 health</div>
-            <div className="mb-2">🔵 skills</div> 
-            <div className="mb-2">🔵 schedule | routine | habits</div>
-            <div className="mb-2">🔵 impressions</div>  
-            <div className="mb-2">🔵 travel</div> 
-            <div className="mb-2">🔵 relationship</div>
-            <div className="mb-2">🔵 property</div>
-            <div className="mb-2">🔵 appearance</div>
+          <div className="text-lg flex flex-col items-start">
+            <div className="mb-0">🔵 aissist networth | daily income </div>
+            <div className="mb-0">🔵 health</div>
+            <div className="mb-0">🔵 skills</div> 
+            <div className="mb-0">🔵 schedule | routine | habits</div>
+            <div className="mb-0">🔵 impressions</div>  
+            <div className="mb-0">🔵 travel</div> 
+            <div className="mb-0">🔵 relationship</div>
+            <div className="mb-0">🔵 property</div>
+            <div className="mb-0">🔵 appearance</div>
             <div>🔵 personal</div>
           </div>
         );
