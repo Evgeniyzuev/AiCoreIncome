@@ -7,11 +7,10 @@ interface ReferralSystemProps {
   startParam: string
 }
 
-const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, startParam }) => {
+const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) => {
   const [referrals, setReferrals] = useState<string[]>([])
   const [referrer, setReferrer] = useState<string | null>(null)
-  const INVITE_URL = "https://t.me/AissistIncomeBot/AissistIncomeBot/start"
-
+  const INVITE_URL = "https://t.me/referral_showcase_bot/start"
 
   useEffect(() => {
     const checkReferral = async () => {
@@ -64,7 +63,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
   return (
     <div className="w-full max-w-md">
       {referrer && (
-        <p className="text-green-500 mb-4">You were referred by user {referrer} {initData}</p>
+        <p className="text-green-500 mb-4">You were referred by user {referrer}</p>
       )}
       <div className="flex flex-col space-y-4">
         <button
@@ -80,7 +79,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
           Copy Invite Link
         </button>
       </div>
-      {referrals.length > 0 ? (
+      {referrals.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Your Referrals</h2>
           <ul>
@@ -91,8 +90,6 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
             ))}
           </ul>
         </div>
-      ) : (
-        <p>You don't have any referrals yet.</p>
       )}
     </div>
   )
