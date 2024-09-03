@@ -80,7 +80,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
           Copy Invite Link
         </button>
       </div>
-      {referrals.length > 0 && (
+      {referrals.length > 0 ? (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Your Referrals</h2>
           <ul>
@@ -91,6 +91,8 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ initData, userId, start
             ))}
           </ul>
         </div>
+      ) : (
+        <p>You don't have any referrals yet.</p>
       )}
     </div>
   )

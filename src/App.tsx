@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import aissist from './images/aissist.png';
 import aissist2 from './images/aissist2.png';
@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [sendToExternal, setSendToExternal] = useState(0);
   const [withdrawRate, setWithdrawRate] = useState(0);
   const [sentToCommunity, setSentToCommunity] = useState(0);
+  const [shouldSaveData, setShouldSaveData] = useState(false);
 
 
   interface UserData {
@@ -77,7 +78,7 @@ const App: React.FC = () => {
   const handleEarn = (amount: number) => {
     setAicoreBalance(prevBalance => {
       const newBalance = parseFloat((prevBalance + amount).toFixed(2));
-      saveDataToCloudStorage();
+      setShouldSaveData(true);
       return newBalance;
     });
   };
@@ -87,7 +88,7 @@ const App: React.FC = () => {
     setAicoreLevel(0);
     setWalletBalance(0);
     setDayCount(0);
-    saveDataToCloudStorage();
+    setShouldSaveData(true);
   };
 
   const handleWalletAction = (action: 'topUp' | 'spend' | 'inCore' | 'withdraw') => {
@@ -151,7 +152,7 @@ const App: React.FC = () => {
     setActionMessage('');
     
     // Save data to CloudStorage after the action is confirmed
-    saveDataToCloudStorage();
+    setShouldSaveData(true);
   };
 
   const handleActionCancel = () => {
@@ -180,9 +181,8 @@ const App: React.FC = () => {
     setCoreIncome(aicoreBalance * dailyCoreRate);
     setWalletIncome(walletBalance * dailyWalletRate);
 
-    // Save all updated data at once
-    // Если необходимо, добавьте небольшую задержку
-    setTimeout(saveDataToCloudStorage, 200);
+    // Trigger data save after state updates
+    setShouldSaveData(true);
   };
 
   useEffect(() => {
@@ -193,31 +193,34 @@ const App: React.FC = () => {
     }
   }, [dayCount]);
 
-  const saveDataToCloudStorage = () => {
-    try {
-      const data = JSON.stringify({
-        aiCoreBalance: aicoreBalance,
-        walletBalance: walletBalance,
-        dayCount: dayCount,
-        sendToExternal: sendToExternal,
-        sentToCommunity: sentToCommunity
+  const saveDataToCloudStorage = useCallback(() => {
+    const data = JSON.stringify({
+      aiCoreBalance: aicoreBalance,
+      walletBalance: walletBalance,
+      dayCount: dayCount,
+      sendToExternal: sendToExternal,
+      sentToCommunity: sentToCommunity
+    });
+    
+    if (WebApp.CloudStorage && typeof WebApp.CloudStorage.setItem === 'function') {
+      WebApp.CloudStorage.setItem('userData', data, (error) => {
+        if (error) {
+          console.error('Error saving data:', error);
+        } else {
+          console.log('Data saved successfully');
+        }
       });
-      
-      if (WebApp.CloudStorage && typeof WebApp.CloudStorage.setItem === 'function') {
-        WebApp.CloudStorage.setItem('userData', data, (error) => {
-          if (error) {
-            console.error('Error saving data:', error);
-          } else {
-            console.log('Data saved successfully');
-          }
-        });
-      } else {
-        console.warn('CloudStorage is not available');
-      }
-    } catch (error) {
-      console.error('Error in saveDataToCloudStorage:', error);
+    } else {
+      console.warn('CloudStorage is not available');
     }
-  };
+  }, [aicoreBalance, walletBalance, dayCount, sendToExternal, sentToCommunity]);
+
+  useEffect(() => {
+    if (shouldSaveData) {
+      saveDataToCloudStorage();
+      setShouldSaveData(false);
+    }
+  }, [shouldSaveData, saveDataToCloudStorage]);
 
   const handleLoadData = () => {
     WebApp.CloudStorage.getItem('userData', (error, value) => {
