@@ -62,8 +62,10 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
 
   return (
     <div className="w-full max-w-md">
-      {referrer && (
+      {referrer ? (
         <p className="text-green-500 mb-4">You were referred by user {referrer}</p>
+      ) : (
+        <p className="text-gray-500 mb-4">No referrer {startParam}</p>
       )}
       <div className="flex flex-col space-y-4">
         <button
