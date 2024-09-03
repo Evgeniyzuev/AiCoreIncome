@@ -186,9 +186,9 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'core':
         return (
-          <div className="text-xl flex flex-col items-center">
-            <div className="mb-4">Core rate (24,5%): {(aicoreBalance * dailyCoreRate).toFixed(2)} USD/day</div>
-            <div className="mb-4 flex items-center">
+          <div className="text-base flex flex-col items-center self-start w-full p-4">
+            <div className="mb-1">Core rate (24,5%): {(aicoreBalance * dailyCoreRate).toFixed(2)} USD/day</div>
+            <div className="mb-1 flex items-center">
               <span className="mr-2">Reinvest</span>
               <input
                 type="number"
@@ -219,10 +219,10 @@ const App: React.FC = () => {
 
               
             </div>
-            <div className="mb-4">Core to wallet: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
-            <div className="mb-4">Core after {coreAfterXyears} years without replenishment:</div>
-            <div className="mb-4"> {(aicoreBalance *  ((dailyCoreRate * reinvestmentPart + 1) ** 365) ** coreAfterXyears).toFixed(2)} USD</div>
-            <div className="mb-4 flex items-center">
+            <div className="mb-1">Core to wallet: {(aicoreBalance * dailyCoreRate * (1 - reinvestmentPart)).toFixed(2)} USD/day</div>
+            <div className="mb-1">Core after {coreAfterXyears} years without replenishment:</div>
+            <div className="mb-1"> {(aicoreBalance *  ((dailyCoreRate * reinvestmentPart + 1) ** 365) ** coreAfterXyears).toFixed(2)} USD</div>
+            <div className="mb-1 flex items-center">
               <span className="mr-2">Period</span>
               <input
                 type="number"
@@ -271,11 +271,11 @@ const App: React.FC = () => {
         );
       case 'chat':
         return (
-          <div className="text-2xl">
+          <div className="text-base">
             <form onSubmit={handleChatSubmit}>
               <input
                 type="text"
-                className="text-black p-2 rounded"
+                className="text-black p-2 rounded w-64"
                 placeholder="Type your message here..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
