@@ -13,12 +13,12 @@ interface ReferralSystemProps {
 const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) => {
   const [referrals, setReferrals] = useState<string[]>([])
   const [referrer, setReferrer] = useState<string | null>(null)
+  const [showReferrals, setShowReferrals] = useState(true)
 
   useEffect(() => {
     const checkReferral = async () => {
       if (userId) {
         saveReferralData(userId, startParam);
-        setReferrals(getAllReferrals(userId));
         setReferrer(getReferrer(userId));
       }
     }
@@ -55,6 +55,14 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
     alert('Invite link copied to clipboard!')
   }
 
+  const handleShowReferrals = async () => {
+    if (!showReferrals) {
+      const updatedReferrals = await getAllReferrals(userId);
+      setReferrals(updatedReferrals);
+    }
+    setShowReferrals(!showReferrals);
+  }
+
   return (
     <div className="w-full max-w-md">
       {referrer ? (
@@ -75,17 +83,27 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
         >
           Copy Invite Link
         </button>
+        <button
+          onClick={handleShowReferrals}
+          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+        >
+          {showReferrals ? 'Hide Referrals' : 'Show Referrals'}
+        </button>
       </div>
-      {referrals.length > 0 && (
+      {showReferrals && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Your Referrals</h2>
-          <ul>
-            {referrals.map((referral, index) => (
-              <li key={index} className="bg-gray-100 p-2 mb-2 rounded">
-                User {referral}
-              </li>
-            ))}
-          </ul>
+          {referrals.length > 0 ? (
+            <ul>
+              {referrals.map((referral, index) => (
+                <li key={index} className="bg-gray-100 p-2 mb-2 rounded">
+                  User {referral}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500">No referrals</p>
+          )}
         </div>
       )}
     </div>
