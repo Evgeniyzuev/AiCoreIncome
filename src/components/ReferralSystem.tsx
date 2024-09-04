@@ -14,6 +14,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
   const [referrals, setReferrals] = useState<string[]>([])
   const [referrer, setReferrer] = useState<string | null>(null)
   const [showReferrals, setShowReferrals] = useState(true)
+  const [greeting, setGreeting] = useState<string | null>(null)
 
   useEffect(() => {
     const checkReferral = async () => {
@@ -37,8 +38,20 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
       }
     }
 
+    const fetchGreeting = async () => {
+      try {
+        const response = await fetch('/api/greeting')
+        if (!response.ok) throw new Error('Failed to fetch greeting')
+        const data = await response.json()
+        setGreeting(data.greeting)
+      } catch (error) {
+        console.error('Error fetching greeting:', error)
+      }
+    }
+
     checkReferral();
     fetchReferrals();
+    fetchGreeting();
   }, [userId, startParam])
 
   const handleInviteFriend = () => {
@@ -65,6 +78,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) =
 
   return (
     <div className="w-full max-w-md">
+      {greeting && <p className="text-blue-500 mb-4">{greeting}</p>}
       {referrer ? (
         <p className="text-green-500 mb-4">You were referred by user {referrer}</p>
       ) : (
