@@ -1,25 +1,21 @@
 interface ReferralData {
-    referrals: { [userId: string]: string[] };
-    referredBy: { [userId: string]: string };
+  [userId: string]: string | null;
+}
+
+let referralStorage: ReferralData = {};
+
+export function saveReferralData(userId: string, referrerId: string | null) {
+  if (!referralStorage[userId]) {
+    referralStorage[userId] = referrerId;
   }
-  
-  let storage: ReferralData = {
-    referrals: {},
-    referredBy: {}
-  };
-  
-  export function saveReferral(userId: string, referrerId: string) {
-    if (!storage.referrals[referrerId]) {
-      storage.referrals[referrerId] = [];
-    }
-    storage.referrals[referrerId].push(userId);
-    storage.referredBy[userId] = referrerId;
-  }
-  
-  export function getReferrals(userId: string): string[] {
-    return storage.referrals[userId] || [];
-  }
-  
-  export function getReferrer(userId: string): string | null {
-    return storage.referredBy[userId] || null;
-  }
+}
+
+export function getAllReferrals(userId: string): string[] {
+  return Object.entries(referralStorage)
+    .filter(([, referrer]) => referrer === userId)
+    .map(([referredUser]) => referredUser);
+}
+
+export function getReferrer(userId: string): string | null {
+  return referralStorage[userId] || null;
+}

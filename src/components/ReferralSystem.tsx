@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { initUtils } from '@telegram-apps/sdk'
+import { saveReferralData, getAllReferrals, getReferrer } from '../components/storage'
+
+const INVITE_URL = 'https://t.me/AissistIncomeBot/AissistIncomeBot/start' // Replace with your actual bot username or invite URL
 
 interface ReferralSystemProps {
   initData: string
@@ -10,21 +13,13 @@ interface ReferralSystemProps {
 const ReferralSystem: React.FC<ReferralSystemProps> = ({ userId, startParam }) => {
   const [referrals, setReferrals] = useState<string[]>([])
   const [referrer, setReferrer] = useState<string | null>(null)
-  const INVITE_URL = "https://t.me/referral_showcase_bot/start"
 
   useEffect(() => {
     const checkReferral = async () => {
-      if (startParam && userId) {
-        try {
-          const response = await fetch('/api/referrals', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, referrerId: startParam }),
-          });
-          if (!response.ok) throw new Error('Failed to save referral');
-        } catch (error) {
-          console.error('Error saving referral:', error);
-        }
+      if (userId) {
+        saveReferralData(userId, startParam);
+        setReferrals(getAllReferrals(userId));
+        setReferrer(getReferrer(userId));
       }
     }
 

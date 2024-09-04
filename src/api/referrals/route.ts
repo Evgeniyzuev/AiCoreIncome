@@ -1,4 +1,4 @@
-import { getReferrals, getReferrer, saveReferral } from '../../components/storage';
+import { getAllReferrals, getReferrer, saveReferralData } from '../../components/storage';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing userId or referrerId' }, { status: 400 });
   }
 
-  saveReferral(userId, referrerId);
+  saveReferralData(userId, referrerId);
   return NextResponse.json({ success: true });
 }
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
   }
 
-  const referrals = getReferrals(userId);
+  const referrals = getAllReferrals(userId);
   const referrer = getReferrer(userId);
 
   return NextResponse.json({ referrals, referrer });
